@@ -1,81 +1,87 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
+    const express = require('express');
+    const bodyParser = require('body-parser');
+    const mongoose = require('mongoose');
+const { title } = require('process');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+    const app = express();
+    const PORT = process.env.PORT || 3000;
 
-// MongoDB connection
-mongoose.connect('mongodb://localhost:27017/todo-app')
-    .then(() => console.log('Connected to MongoDB'))
-    .catch(err => console.error('Failed to connect to MongoDB', err));
+    // MongoDB connection
+    mongoose.connect('mongodb://localhost:27017/todo-app')
+        .then(() => console.log('Connected to MongoDB'))
+        .catch(err => console.error('Failed to connect to MongoDB', err));
 
-// Todo schema
-const todoSchema = new mongoose.Schema({
-    task: {
-        type: String,
-        required: true
-    },
-    completed: {
-        type: Boolean,
-        default: false
-    }
-});
-
-const Todo = mongoose.model('Todo', todoSchema);
-
-// Middleware
-app.use(bodyParser.json());
-
-// Routes
-// Get all todos
-app.get('/todos', async (req, res) => {
-    try {
-        const todos = await Todo.find();
-        res.json(todos);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
-
-// Create a todo
-app.post('/todos', async (req, res) => {
-    const todo = new Todo({
-        task: req.body.task
+    // Todo schema
+    const taskSchema = new mongoose.Schema({
+        title: {
+            type: String,
+            required: true
+        },
+        description: { type: String, required: false},
+        status: {
+            type: String,
+            enum: ['To Do', 'In Progress', 'Done'],
+            default: 'To Do',
+            required: true
+        }
     });
-    try {
-        const newTodo = await todo.save();
-        res.status(201).json(newTodo);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
-});
 
-// Update a todo
-app.patch('/todos/:id', async (req, res) => {
-    try {
-        const updatedTodo = await Todo.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
-        res.json(updatedTodo);
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
-});
+    const Task = mongoose.model('TodoApp', taskSchema);
 
-// Delete a todo
-app.delete('/todos/:id', async (req, res) => {
-    try {
-        await Todo.findByIdAndRemove(req.params.id);
-        res.json({ message: 'Todo deleted' });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
+    // Middleware
+    app.use(bodyParser.json());
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ message: 'Something went wrong!' });
-});
+    // Routes
+    // Get all tasks
+    app.get('/tasks', async (req, res) => {
+        try {
+            const tasks = await Task.find();
+            res.json(tasks);
+        } catch (err) {
+            res.status(500).json({ message: err.message });
+        }
+    });
 
-// Start server
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+    // Create a task
+    app.post('/tasks', async (req, res) => {
+        const task = new Task({
+            title: req.body.title,
+            description: req.body.description,
+            status: req.body.status
+        });
+        try {
+            const newTask = await task.save();
+            res.status(201).json(newTask);
+        } catch (err) {
+            res.status(400).json({ message: err.message });
+        }
+    });
+
+    // Update a task
+    app.patch('/tasks/:id', async (req, res) => {
+        try {
+            const updatedTask = await Task.findByIdAndUpdate(req.params.id, { $set: req.body }, { new: true });
+            res.json(updatedTask);
+        } catch (err) {
+            res.status(400).json({ message: err.message });
+        }
+    });
+
+    // Delete a task
+    app.delete('/tasks/:id', async (req, res) => {
+        try {
+            await Task.findByIdAndRemove(req.params.id);
+            res.json({ message: 'Task deleted' });
+        } catch (err) {
+            res.status(500).json({ message: err.message });
+        }
+    });
+
+    // Error handling middleware
+    app.use((err, req, res, next) => {
+        console.error(err.stack);
+        res.status(500).json({ message: 'Something went wrong!' });
+    });
+
+    // Start server
+    app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
