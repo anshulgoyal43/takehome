@@ -1,11 +1,12 @@
     const express = require('express');
     const bodyParser = require('body-parser');
     const mongoose = require('mongoose');
-const { title } = require('process');
+    const { title } = require('process');
+    const cors = require('cors'); // Import the cors package
 
     const app = express();
     const PORT = process.env.PORT || 3000;
-
+    app.use(cors());
     // MongoDB connection
     mongoose.connect('mongodb://localhost:27017/todo-app')
         .then(() => console.log('Connected to MongoDB'))
@@ -30,7 +31,7 @@ const { title } = require('process');
 
     // Middleware
     app.use(bodyParser.json());
-
+    app.use(bodyParser.urlencoded({ extended: true }));
     // Routes
     // Get all tasks
     app.get('/tasks', async (req, res) => {
@@ -70,7 +71,7 @@ const { title } = require('process');
     // Delete a task
     app.delete('/tasks/:id', async (req, res) => {
         try {
-            await Task.findByIdAndRemove(req.params.id);
+            await Task.findByIdAndDelete(req.params.id);
             res.json({ message: 'Task deleted' });
         } catch (err) {
             res.status(500).json({ message: err.message });
